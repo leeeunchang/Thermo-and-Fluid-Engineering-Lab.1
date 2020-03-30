@@ -1,0 +1,203 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Untitled0.ipynb의 사본의 사본",
+      "provenance": [],
+      "authorship_tag": "ABX9TyOCmU5BwpFD8otyzBMe2b+C",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/leeeunchang/Thermo-and-Fluid-Engineering-Lab.1/blob/master/Untitled0_ipynb%EC%9D%98_%EC%82%AC%EB%B3%B8%EC%9D%98_%EC%82%AC%EB%B3%B8.ipynb02\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "mdnRwa-8lW_v",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import math\n",
+        "import os\n",
+        "import shutil\n",
+        "import numpy as np"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ipv5Biaxlana",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "class Parabolic:\n",
+        "\n",
+        "    def __init__(self, dt = float(0.000001), t_end = float(0.005), nu = 0.5):\n",
+        "        self.U0 = 40\n",
+        "        self.N = 41\n",
+        "        self.h = 0.02\n",
+        "        self.dx = self.h/(self.N-1)\n",
+        "        self.dt = dt\n",
+        "        self.t_end = t_end\n",
+        "        self.nu = nu\n",
+        "        self.diffusion = None\n",
+        "        self.U = np.random.randn(self.N)\n",
+        "        self.Unew = np.random.randn(self.N)\n",
+        "        self.Scheme_name = \"Error\"\n",
+        "        self.scheme = 'Explicit'\n",
+        "        self.iter = int(self.t_end/self.dt)\n",
+        "        self.time = float(0.0)\n",
+        "        self.dirname = \"Error\"\n",
+        "        return\n",
+        "\n",
+        "    def diffusion_number(self):\n",
+        "        self.diffusion = self.nu * self.dt / (math.pow(self.dx, 2))\n",
+        "        print(\"Diffusion number is %.3f\"%self.diffusion)\n",
+        "\n",
+        "    def dinamic_viscosity(self):\n",
+        "        if (self.diffusion > 0.5):\n",
+        "            print(\"You cannot get proper solution when diffusion number is larger than 0.5\")\n",
+        "\n",
+        "    def Initial_Condition(self):\n",
+        "        self.U = np.zeros(self.N)\n",
+        "        self.Unew = np.zeros(self.N)\n",
+        "\n",
+        "    def Boundary_Condition(self):\n",
+        "        self.U[0] = self.Unew[0] = self.U0\n",
+        "\n",
+        "    def Time_Marching(self):\n",
+        "        self.U = self.Unew.copy()\n",
+        "\n",
+        "    def Dir_Write(self):\n",
+        "        self.dirname = \"Parabolic,d={0}\".format(self.diffusion)\n",
+        "        path = os.getcwd()\n",
+        "        self.dirname = os.path.join(path, self.dirname)\n",
+        "        if os.path.isdir(self.dirname):\n",
+        "            shutil.rmtree(self.dirname)  # 디렉토리가 존재하면 삭제하고 다시 계산# return # 디렉토리가 존재하면 덮어쓰기 #\n",
+        "        os.mkdir(self.dirname)\n",
+        "        return\n",
+        "\n",
+        "    def Para_Write(self):\n",
+        "        filename = \"{0}/d={1}.csv.\".format(self.dirname, self.diffusion)\n",
+        "        filename = \"%s%.6f\"%(filename, self.time)\n",
+        "        file = open(filename, 'w')\n",
+        "        file.write(\"X,Y,Z,Velocity\\n\")\n",
+        "        for i in range(len(self.U)):\n",
+        "            data = \"%3.3f,%3.3f,%3.3f,%3.3f\\n\" % (float(i*self.dx), 0.0, 0.0, self.U[i])\n",
+        "            file.write(data)\n",
+        "        file.close()\n",
+        "\n",
+        "    def FTCS(self):\n",
+        "        for i in range(1, len(self.U)-1):\n",
+        "            self.Unew[i] = self.diffusion * (self.U[i-1]+self.U[i+1])+(1.0-2.0*self.diffusion)*self.U[i]\n",
+        "\n",
+        "    def Explicit_Solver(self):\n",
+        "        for i in range(self.iter+1):\n",
+        "            self.Para_Write()\n",
+        "            self.FTCS()\n",
+        "            self.Time_Marching()\n",
+        "            self.time += self.dt\n",
+        "            print(\"\\rtime = %.6f\" % self.time, end=\"\")\n",
+        "        print()\n",
+        "\n",
+        "    def Main(self):\n",
+        "        self.time = 0.0\n",
+        "        self.diffusion_number()\n",
+        "        self.dinamic_viscosity()\n",
+        "        self.Initial_Condition()\n",
+        "        self.Boundary_Condition()\n",
+        "        self.Dir_Write()\n",
+        "        self.Explicit_Solver()\n",
+        "      "
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "BOPPj2HPla4n",
+        "colab_type": "code",
+        "outputId": "a82dc61c-7a6b-443c-fada-391ba948d29f",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 87
+        }
+      },
+      "source": [
+        "PyCompute = Parabolic(dt = float(0.000001), t_end = float(0.005), nu = 0.5)\n",
+        "PyCompute.Main()"
+      ],
+      "execution_count": 0,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Diffusion number is 2.000\n",
+            "You cannot get proper solution when diffusion number is larger than 0.5\n",
+            "time = 0.000740"
+          ],
+          "name": "stdout"
+        },
+        {
+          "output_type": "stream",
+          "text": [
+            "/usr/local/lib/python3.6/dist-packages/ipykernel_launcher.py:60: RuntimeWarning: overflow encountered in double_scalars\n"
+          ],
+          "name": "stderr"
+        },
+        {
+          "output_type": "stream",
+          "text": [
+            "time = 0.005001\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "k5PPhBOmlmSf",
+        "colab_type": "code",
+        "outputId": "97575d91-4621-43b4-d748-6141b909a281",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 52
+        }
+      },
+      "source": [
+        "!zip -r -qq Parabolic,d=0.5.zip Parabolic,d=0.5"
+      ],
+      "execution_count": 0,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "\n",
+            "zip error: Nothing to do! (try: zip -r -qq Parabolic,d=0.5.zip . -i Parabolic,d=0.5)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    }
+  ]
+}
